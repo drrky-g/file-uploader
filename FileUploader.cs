@@ -13,7 +13,7 @@ namespace file_uploader {
         [AllowAnonymous]
         [HttpPost]
         [FunctionName("upload")]
-        public static async Task<IActionResult> Upload ([HttpTrigger(AuthorizationLevel.Anonymous, "post")][FromForm] HttpRequest req) {
+        public static async Task<IActionResult> Upload ([HttpTrigger(AuthorizationLevel.Anonymous, "post")]HttpRequest req) {
             try{
                 byte[] buffer = new byte[req.Body.Length];
                 req.Body.Position = 0;
@@ -21,7 +21,6 @@ namespace file_uploader {
                 MemoryStream s = new MemoryStream(buffer);
                 string fileName = await StorageUtility.CopyToImageContainer(s);
                 return new OkObjectResult(fileName);
-
             }catch(Exception e) {
                 return new BadRequestObjectResult(e.Message);
             }
