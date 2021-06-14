@@ -9,20 +9,13 @@ public static class StorageUtility {
     private static string account = Environment.GetEnvironmentVariable("StorageAccount");
     private static string key = Environment.GetEnvironmentVariable("StorageKey");
     private static StorageSharedKeyCredential credential = new StorageSharedKeyCredential(account, key);
-    public static string[] formats = new string[] {
-        ".jpeg", ".png", ".gif", ".jpeg"
-    };
-    public static bool IsImage(IFormFile file) => 
-        file.ContentType.Contains("image") || 
-        formats.Any(x => x == Path.GetExtension(file.FileName));
-    public static async Task<string> CopyToImageContainer(IFormFile file){
-        string ext = Path.GetExtension(file.FileName);
+    public static bool IsImage(HttpRequest req) => 
+        req.ContentType.Contains("image");
+    public static async Task<string> CopyToImageContainer(MemoryStream s){
         string name = DateTime.Now.Ticks.ToString();
-        using(Stream s = file.OpenReadStream()){
-            Uri locale = new Uri($"https://{account}.blob.core.windows.net/images/{name}{ext}");
-            BlobClient client = new BlobClient(locale, credential);
-            await client.UploadAsync(s);
-        }
-        return name + ext;
+        Uri locale = new Uri($"https://{account}.blob.core.windows.net/images/{name}.png");
+        BlobClient client = new BlobClient(locale, credential);
+        await client.UploadAsync(s);
+        return $"{name}.png";
     }
 }

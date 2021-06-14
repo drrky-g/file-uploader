@@ -5,24 +5,23 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using System;
 using Microsoft.AspNetCore.Authorization;
+using System.IO;
+using System.Text;
 
 namespace file_uploader {
     public static class FileUploader {
         [AllowAnonymous]
         [HttpPost]
         [FunctionName("upload")]
-        public static async Task<IActionResult> Upload ([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req) {
+        public static async Task<IActionResult> Upload ([HttpTrigger(AuthorizationLevel.Anonymous, "post")][FromForm] HttpRequest req) {
             try{
-                if(req.Form.Files.Count == 1 &&
-                StorageUtility.IsImage(req.Form.Files[0]) &&
-                req.Form.Files[0].Length > 0) {
-                    if(req.Form.Files[0].Length >  9e6) { //9 megabytes
-                        return new StatusCodeResult(StatusCodes.Status413PayloadTooLarge);
-                    }
-                    string fileName = await StorageUtility.CopyToImageContainer(req.Form.Files[0]);
-                    return new OkObjectResult(fileName);
-                }
-                return new UnsupportedMediaTypeResult();
+                byte[] buffer = new byte[req.Body.Length];
+                req.Body.Position = 0;
+                await req.Body.ReadAsync(buffer, 0, buffer.Length);
+                MemoryStream s = new MemoryStream(buffer);
+                string fileName = await StorageUtility.CopyToImageContainer(s);
+                return new OkObjectResult(fileName);
+
             }catch(Exception e) {
                 return new BadRequestObjectResult(e.Message);
             }
