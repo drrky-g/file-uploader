@@ -4,17 +4,15 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using System;
-using Microsoft.AspNetCore.Authorization;
 using System.IO;
-using System.Text;
 
 namespace file_uploader {
     public static class FileUploader {
-        [AllowAnonymous]
-        [HttpPost]
         [FunctionName("upload")]
         public static async Task<IActionResult> Upload ([HttpTrigger(AuthorizationLevel.Anonymous, "post")]HttpRequest req) {
-            try{
+            if(!StorageUtility.IsImage(req))
+                return new UnsupportedMediaTypeResult();
+            try {
                 byte[] buffer = new byte[req.Body.Length];
                 req.Body.Position = 0;
                 await req.Body.ReadAsync(buffer, 0, buffer.Length);
@@ -25,6 +23,5 @@ namespace file_uploader {
                 return new BadRequestObjectResult(e.Message);
             }
         }
-        
     }
 }
